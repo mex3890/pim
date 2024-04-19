@@ -21,7 +21,9 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "providers": [
+                "Pim\\PaymentManagerProvider"
+            ]
         }
     },
     "config": {
