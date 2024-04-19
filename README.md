@@ -1,66 +1,103 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+<img src="./pim.png" height="200px">
 </p>
 
-## About Laravel
+`Payment Integration Manager`
+#### Disable Payment Action
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+You can need disable an action key globally like `card.create` or a specific payment service action, PIM enable you to
+work with two scenarios, first disable globally a Payment Action, to that just add action key in config `pim.php` like
+bellow:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+````php
+> //pim.php
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+return [
+    'disabled_actions' => [
+        'pix' => [
+            'create',
+            'delete',
+        ],   
+    ],
+];
+````
 
-## Learning Laravel
+Now to disable specific actions from a Payment Service, you need extend and create our new ServiceMap who list our
+actions and to read this ServiceMap you need extend and create new PaymentProvider to use our custom ServiceMap with or
+needed actions.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```php
+<?php
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+use App\CustomPayment\PaymentServices\PixService\Actions\CreateAction;
+use App\CustomPayment\PaymentServices\PixService\Actions\DestroyAction;
+use Pim\ServiceMap;
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+class PixServiceMap extends ServiceMap
+{
+    public static function actionPrefix(): string
+    {
+        return 'pix';
+    }
 
-## Laravel Sponsors
+    public static function actions(): array
+    {
+        return [
+            CreateAction::ACTION_KEY,
+            DestroyAction::ACTION_KEY,
+        ];
+    }
+}
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```php
+<?php
 
-### Premium Partners
+use App\CustomPayment\PaymentServices\PixService;
+use App\CustomPayment\PaymentServices\PixService\PixServiceMap;
+use Pim\DataTransferObjects\ConfigFile;
+use Pim\PaymentProvider;
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+class CustomPaymentProvider extends PaymentProvider
+{
+    public static function actionMaps(): array
+    {
+        return [
+            PixServiceMap::class,
+        ];
+    }
+}
+```
 
-## Contributing
+In the `PaymentProvider` you can override and add our customs `PaymentServices` like bellow:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```php
+<?php
 
-## Code of Conduct
+use App\CustomPayment\PaymentServices\PixService;
+use App\CustomPayment\PaymentServices\PixService\PixServiceMap;
+use Pim\DataTransferObjects\ConfigFile;
+use Pim\PaymentProvider;
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+class CustomPaymentProvider extends PaymentProvider
+{
+    public static function paymentServices(): array
+    {
+        return [
+            PixService::class,
+        ];
+    }
+}
+```
 
-## Security Vulnerabilities
+To disable a `PaymentService` you can add to config `pim.php` the service key that need be disabled like bellow:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```php
+> //pim.php
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+return [
+    'disabled_services' => [
+        'pix',
+    ],
+];
+```
