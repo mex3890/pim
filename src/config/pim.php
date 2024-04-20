@@ -1,12 +1,8 @@
 <?php
 
-use App\QiTech\QiTechPaymentProvider;
-
 return [
     /** string[] provider that represent the Payment Api Providers. */
-    'payment_providers' => [
-        QiTechPaymentProvider::class,
-    ],
+    'payment_providers' => [],
     'disabled_actions' => [
 //        'pix' => ['create']
     ],
