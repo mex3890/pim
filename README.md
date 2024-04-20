@@ -3,6 +3,14 @@
 </p>
 
 `Payment Integration Manager`
+
+### First Steps
+#### Publish Config
+
+```shell
+php artisan vendor:p --tag=pim
+```
+
 #### Disable Payment Action
 
 You can need disable an action key globally like `card.create` or a specific payment service action, PIM enable you to
